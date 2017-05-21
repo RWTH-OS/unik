@@ -15,6 +15,7 @@ type Providers struct {
 	Xen        []Xen        `yaml:"xen"`
 	Openstack  []Openstack  `yaml:"openstack"`
 	Ukvm       []Ukvm       `yaml:"ukvm"`
+	Uhyve      []Uhyve      `yaml:"uhyve"`
 }
 
 type Aws struct {
@@ -55,11 +56,16 @@ type Qemu struct {
 	Name         string `yaml:"name"`
 	NoGraphic    bool   `yaml:"no_graphic"`
 	DebuggerPort int    `yaml:"debugger_port"`
+	RedirPort    int    `yaml:"redir_port"`
 }
 
 type Ukvm struct {
 	Name string `yaml:"name"`
 	Tap  string `yaml:"tap_device"`
+}
+
+type Uhyve struct {
+	Name string `yaml:"name"`
 }
 
 type Xen struct {

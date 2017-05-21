@@ -15,9 +15,8 @@ import (
 	"path/filepath"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/ioutils"
-	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/cf-unik/unik/pkg/compilers"
+	"github.com/cf-unik/unik/pkg/compilers/hermit"
 	"github.com/cf-unik/unik/pkg/compilers/includeos"
 	"github.com/cf-unik/unik/pkg/compilers/mirage"
 	"github.com/cf-unik/unik/pkg/compilers/osv"
@@ -30,6 +29,7 @@ import (
 	"github.com/cf-unik/unik/pkg/providers/openstack"
 	"github.com/cf-unik/unik/pkg/providers/photon"
 	"github.com/cf-unik/unik/pkg/providers/qemu"
+	"github.com/cf-unik/unik/pkg/providers/uhyve"
 	"github.com/cf-unik/unik/pkg/providers/ukvm"
 	"github.com/cf-unik/unik/pkg/providers/virtualbox"
 	"github.com/cf-unik/unik/pkg/providers/vsphere"
@@ -37,6 +37,8 @@ import (
 	"github.com/cf-unik/unik/pkg/state"
 	"github.com/cf-unik/unik/pkg/types"
 	"github.com/cf-unik/unik/pkg/util"
+	"github.com/docker/docker/pkg/ioutils"
+	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/go-martini/martini"
 	"github.com/layer-x/layerx-commons/lxmartini"
 )
@@ -56,6 +58,7 @@ const (
 	photon_provider     = "photon"
 	xen_provider        = "xen"
 	ukvm_provider       = "ukvm"
+	uhyve_provider      = "uhyve"
 	gcloud_provider     = "gcloud"
 	openstack_provider  = "openstack"
 )
@@ -203,6 +206,22 @@ func NewUnikDaemon(config config.DaemonConfig) (*UnikDaemon, error) {
 		break
 	}
 
+	for _, uhyveConfig := range config.Providers.Uhyve {
+		logrus.Infof("Bootstrapping provider %s with config %v", uhyve_provider, uhyveConfig)
+		p, err := uhyve.NewUhyveProvider(uhyveConfig)
+		if err != nil {
+			return nil, errors.New("initializing uhyve provider", err)
+		}
+		s, err := state.BasicStateFromFile(uhyve.UhyveStateFile())
+		if err != nil {
+			logrus.WithError(err).Warnf("failed to read uhyve state file at %s, creating blank state", uhyve.UhyveStateFile())
+			s = state.NewBasicState(uhyve.UhyveStateFile())
+		}
+		p = p.WithState(s)
+		_providers[uhyve_provider] = p
+		break
+	}
+
 	for _, gcloudConfig := range config.Providers.Gcloud {
 		logrus.Infof("Bootstrapping provider %s with config %v", gcloud_provider, gcloudConfig)
 		p, err := gcloud.NewGcloudProvier(gcloudConfig)
@@ -273,6 +292,31 @@ func NewUnikDaemon(config config.DaemonConfig) (*UnikDaemon, error) {
 		},
 		BootstrapType: rump.BootstrapTypeGCLOUD,
 	}
+
+	//hermitcore (c, c++, fortran and go)
+	_compilers[compilers.HERMIT_C_QEMU] = &hermit.HermitQemuCompiler{
+		CompilerType: compilers.HERMIT_C_QEMU.String(),
+	}
+	_compilers[compilers.HERMIT_C_UHYVE] = &hermit.HermitUhyveCompiler{}
+	_compilers[compilers.HERMIT_C_OPENSTACK] = &hermit.HermitOpenstackCompiler{}
+
+	_compilers[compilers.HERMIT_CPP_QEMU] = &hermit.HermitQemuCompiler{
+		CompilerType: compilers.HERMIT_CPP_QEMU.String(),
+	}
+	_compilers[compilers.HERMIT_CPP_UHYVE] = &hermit.HermitUhyveCompiler{}
+	_compilers[compilers.HERMIT_CPP_OPENSTACK] = &hermit.HermitOpenstackCompiler{}
+
+	_compilers[compilers.HERMIT_FORTRAN_QEMU] = &hermit.HermitQemuCompiler{
+		CompilerType: compilers.HERMIT_FORTRAN_QEMU.String(),
+	}
+	_compilers[compilers.HERMIT_FORTRAN_UHYVE] = &hermit.HermitUhyveCompiler{}
+	_compilers[compilers.HERMIT_FORTRAN_OPENSTACK] = &hermit.HermitOpenstackCompiler{}
+
+	_compilers[compilers.HERMIT_GO_QEMU] = &hermit.HermitQemuCompiler{
+		CompilerType: compilers.HERMIT_GO_QEMU.String(),
+	}
+	_compilers[compilers.HERMIT_GO_UHYVE] = &hermit.HermitUhyveCompiler{}
+	_compilers[compilers.HERMIT_GO_OPENSTACK] = &hermit.HermitOpenstackCompiler{}
 
 	//includeos-cpp
 	_compilers[compilers.INCLUDEOS_CPP_QEMU] = &includeos.IncludeosQemuCompiler{}
@@ -834,6 +878,9 @@ func (d *UnikDaemon) initialize() {
 				return nil, http.StatusBadRequest, err
 			}
 
+			index := strings.LastIndex(req.Host, ":")
+			ipaddress := req.Host[0:index]
+
 			params := types.RunInstanceParams{
 				Name:                 runInstanceRequest.InstanceName,
 				ImageId:              runInstanceRequest.ImageName,
@@ -842,6 +889,7 @@ func (d *UnikDaemon) initialize() {
 				InstanceMemory:       runInstanceRequest.MemoryMb,
 				NoCleanup:            runInstanceRequest.NoCleanup,
 				DebugMode:            runInstanceRequest.DebugMode,
+				Ip:                   ipaddress,
 			}
 
 			instance, err := provider.RunInstance(params)

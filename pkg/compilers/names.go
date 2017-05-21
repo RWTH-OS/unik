@@ -81,6 +81,22 @@ var (
 	OSV_NATIVE_OPENSTACK = compilerName("osv", "native", "openstack")
 	OSV_NATIVE_AWS       = compilerName("osv", "native", "aws")
 
+	HERMIT_C_QEMU      = compilerName("hermitcore", "c", "qemu")
+	HERMIT_C_UHYVE     = compilerName("hermitcore", "c", "uhyve")
+	HERMIT_C_OPENSTACK = compilerName("hermitcore", "c", "openstack")
+
+	HERMIT_CPP_QEMU      = compilerName("hermitcore", "cpp", "qemu")
+	HERMIT_CPP_UHYVE     = compilerName("hermitcore", "cpp", "uhyve")
+	HERMIT_CPP_OPENSTACK = compilerName("hermitcore", "cpp", "openstack")
+
+	HERMIT_FORTRAN_QEMU      = compilerName("hermitcore", "fortran", "qemu")
+	HERMIT_FORTRAN_UHYVE     = compilerName("hermitcore", "fortran", "uhyve")
+	HERMIT_FORTRAN_OPENSTACK = compilerName("hermitcore", "fortran", "openstack")
+
+	HERMIT_GO_QEMU      = compilerName("hermitcore", "go", "qemu")
+	HERMIT_GO_UHYVE     = compilerName("hermitcore", "go", "uhyve")
+	HERMIT_GO_OPENSTACK = compilerName("hermitcore", "go", "openstack")
+
 	INCLUDEOS_CPP_QEMU       = compilerName("includeos", "cpp", "qemu")
 	INCLUDEOS_CPP_XEN        = compilerName("includeos", "cpp", "xen")
 	INCLUDEOS_CPP_VIRTUALBOX = compilerName("includeos", "cpp", "virtualbox")
@@ -144,6 +160,22 @@ var compilers = []CompilerType{
 	OSV_NATIVE_QEMU,
 	OSV_NATIVE_OPENSTACK,
 	OSV_NATIVE_AWS,
+
+	HERMIT_C_QEMU,
+	HERMIT_C_UHYVE,
+	HERMIT_C_OPENSTACK,
+
+	HERMIT_CPP_QEMU,
+	HERMIT_CPP_UHYVE,
+	HERMIT_CPP_OPENSTACK,
+
+	HERMIT_FORTRAN_QEMU,
+	HERMIT_FORTRAN_UHYVE,
+	HERMIT_FORTRAN_OPENSTACK,
+
+	HERMIT_GO_QEMU,
+	HERMIT_GO_UHYVE,
+	HERMIT_GO_OPENSTACK,
 
 	INCLUDEOS_CPP_QEMU,
 	INCLUDEOS_CPP_XEN,

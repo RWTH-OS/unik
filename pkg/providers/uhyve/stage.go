@@ -1,4 +1,4 @@
-package qemu
+package uhyve
 
 import (
 	"os"
@@ -12,7 +12,7 @@ import (
 	"github.com/cf-unik/unik/pkg/types"
 )
 
-func (p *QemuProvider) Stage(params types.StageImageParams) (_ *types.Image, err error) {
+func (p *UhyveProvider) Stage(params types.StageImageParams) (_ *types.Image, err error) {
 	images, err := p.ListImages()
 	if err != nil {
 		return nil, errors.New("retrieving image list for existing image", err)
@@ -90,7 +90,7 @@ func (p *QemuProvider) Stage(params types.StageImageParams) (_ *types.Image, err
 		RunSpec:        params.RawImage.RunSpec,
 		StageSpec:      params.RawImage.StageSpec,
 		SizeMb:         sizeMb,
-		Infrastructure: types.Infrastructure_QEMU,
+		Infrastructure: types.Infrastructure_UHYVE,
 		Created:        time.Now(),
 	}
 

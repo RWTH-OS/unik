@@ -1,0 +1,14 @@
+FROM ubuntu:16.04
+
+RUN apt-get update
+RUN apt-get install -y apt-transport-https
+RUN echo "deb https://dl.bintray.com/rwth-os/hermitcore vivid main" | tee -a /etc/apt/sources.list
+RUN apt-get -qq update
+RUN apt-get install -y build-essential 
+RUN apt-get install --yes --force-yes binutils-hermit newlib-hermit pthread-embedded-hermit gcc-hermit
+
+VOLUME /opt/code
+WORKDIR /opt/code
+
+env PATH /opt/hermit/bin:$PATH
+CMD cp /opt/hermit/bin/ldhermit.elf /opt/code/ldhermit.elf && make

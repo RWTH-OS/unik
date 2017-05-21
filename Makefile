@@ -43,7 +43,7 @@ define remove_container
 	docker rmi -f projectunik/$(1):$(shell cat containers/versions.json  | jq '.["$(1)"]')
 endef
 
-all: ${SOURCES} binary
+all: ${SOURCES} binary hermitcore-proxy
 
 .PHONY: pull
 .PHONY: containers
@@ -68,6 +68,8 @@ all: ${SOURCES} binary
 .PHONY: compilers-osv-dynamic
 .PHONY: compilers-mirage-ocaml-xen
 .PHONY: compilers-mirage-ocaml-ukvm
+.PHONY: compilers-hermitcore-common
+.PHONY: compilers-hermitcore-openstack
 
 .PHONY: compilers
 .PHONY: boot-creator
@@ -100,7 +102,7 @@ pull:
 	$(call pull_container,compilers-rump-base-xen)
 	$(call pull_container,compilers-rump-base-hw)
 	$(call pull_container,rump-debugger-qemu)
-	$(call pull_container,compilers-rump-base-common)	
+	$(call pull_container,compilers-rump-base-common)
 	docker pull euranova/ubuntu-vbox
 #------
 
@@ -123,7 +125,9 @@ compilers: compilers-includeos-cpp-hw \
            compilers-rump-python3-hw-no-stub \
            compilers-rump-python3-xen \
            compilers-osv-java \
-           compilers-osv-dynamic
+           compilers-osv-dynamic \
+           compilers-hermitcore-common \
+					 compilers-hermitcore-openstack
 
 compilers-includeos-cpp-common:
 	$(call build_container,compilers/includeos/cpp,$@,.common)
@@ -200,6 +204,12 @@ compilers-mirage-ocaml-xen:
 compilers-mirage-ocaml-ukvm:
 	$(call build_container,compilers/mirage/ocaml,$@,.ukvm)
 
+compilers-hermitcore-common:
+	$(call build_container,compilers/hermitcore,$@,.common)
+
+compilers-hermitcore-openstack:
+		$(call build_container,compilers/hermitcore,$@,.openstack)
+
 #utils
 utils: boot-creator image-creator vsphere-client qemu-util
 
@@ -255,6 +265,9 @@ endif
 	@echo "Install finished! UniK binary can be found at $(shell pwd)/_build/unik"
 #----
 
+hermitcore-proxy:
+	$(CC) -o $(HOME)/.unik/hermitcoreproxy $(shell pwd)/hermitcore_proxy/proxy.c $(shell pwd)/hermitcore_proxy/uhyve.c -lpthread
+
 # local build - useful if you have development env setup. if not - use binary! (this can't depend on binary as binary depends on it via the Dockerfile)
 localbuild: instance-listener/bindata/instance_listener_data.go containers/version-data.go ${SOURCES}
 	GOOS=${TARGET_OS} go build -v .
@@ -297,6 +310,8 @@ remove-containers:
 	-$(call remove_container,compilers-rump-base-hw)
 	-$(call remove_container,rump-debugger-qemu)
 	-$(call remove_container,compilers-rump-base-common)
+	-$(call remove_container,compilers-hermitcore-common)
+	-$(call remove_container,compilers-hermitcore-openstack)
 
 clean:
 	rm -rf ./_build
