@@ -2,9 +2,10 @@ package common
 
 import (
 	"fmt"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/cf-unik/unik/pkg/types"
+	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/layer-x/layerx-commons/lxhttpclient"
 )
 
@@ -16,7 +17,7 @@ func GetInstanceLogs(instance *types.Instance) (string, error) {
 	}
 	_, body, err := lxhttpclient.Get(instance.IpAddress+fmt.Sprintf(":%v", UnikLogsPort), "/logs", nil)
 	if err != nil {
-		return "", errors.New("faiiled to connect to instance at "+instance.IpAddress+" for logs", err)
+		return "", errors.New("failed to connect to instance at "+instance.IpAddress+" for logs", err)
 	}
 	logrus.WithFields(logrus.Fields{"response-length": len(body), "instance": instance}).Debugf("received stdout from instance")
 	return string(body), nil

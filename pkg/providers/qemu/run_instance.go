@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"io/ioutil"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/cf-unik/unik/pkg/compilers"
+	"github.com/cf-unik/unik/pkg/config" //add hermitcore proxy
 	"github.com/cf-unik/unik/pkg/providers/common"
 	"github.com/cf-unik/unik/pkg/types"
 	"github.com/cf-unik/unik/pkg/util"
+	"github.com/emc-advanced-dev/pkg/errors"
 )
 
 func (p *QemuProvider) RunInstance(params types.RunInstanceParams) (_ *types.Instance, err error) {
@@ -99,15 +102,34 @@ func (p *QemuProvider) RunInstance(params types.RunInstanceParams) (_ *types.Ins
 	}
 
 	qemuArgs = append(qemuArgs, volArgs...)
-	cmd := exec.Command("qemu-system-x86_64", qemuArgs...)
-
-	util.LogCommand(cmd, true)
-
-	if err := cmd.Start(); err != nil {
-		return nil, errors.New("can't start qemu - make sure it's in your path.", nil)
-	}
 
 	var instanceIp string
+	var cmd *exec.Cmd
+	/* in case of HermitCore the corresponding proxy starts qemu and passes the arguments */
+	if compilers.CompilerType(image.RunSpec.Compiler).Base() == "hermitcore" {
+
+		cmdName := filepath.Join(config.Internal.UnikHome, "hermitcoreproxy")
+		cmdArgs := []string{getImagePath(image.Name)}
+		cmd = exec.Command(cmdName, cmdArgs...)
+		env := os.Environ()
+		env = append(env, "HERMIT_ISLE=qemu")
+		env = append(env, "HERMIT_APP_PORT="+strconv.Itoa(p.config.RedirPort))
+		cmd.Env = env
+
+		if err := cmd.Start(); err != nil {
+			return nil, errors.New("can't start HermitCore's proxy", nil)
+		}
+		instanceIp = params.Ip
+
+	} else {
+		cmd := exec.Command("qemu-system-x86_64", qemuArgs...)
+
+		util.LogCommand(cmd, true)
+
+		if err := cmd.Start(); err != nil {
+			return nil, errors.New("can't start qemu - make sure it's in your path.", nil)
+		}
+	}
 
 	instance := &types.Instance{
 		Id:             fmt.Sprintf("%d", cmd.Process.Pid),

@@ -2,17 +2,19 @@ package openstack
 
 import (
 	"fmt"
+	"math"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/emc-advanced-dev/pkg/errors"
 	unikos "github.com/cf-unik/unik/pkg/os"
 	"github.com/cf-unik/unik/pkg/types"
+	"github.com/emc-advanced-dev/pkg/errors"
 	"github.com/rackspace/gophercloud"
 	"github.com/rackspace/gophercloud/openstack/compute/v2/flavors"
 	"github.com/rackspace/gophercloud/openstack/imageservice/v2/images"
 	"github.com/rackspace/gophercloud/pagination"
-	"math"
-	"os"
-	"time"
 )
 
 func (p *OpenstackProvider) Stage(params types.StageImageParams) (_ *types.Image, err error) {
@@ -159,10 +161,10 @@ func listFlavors(clientNova *gophercloud.ServiceClient, minDiskGB int, minMemory
 	return flavs, nil
 }
 
-// pushImage first creates meta for image at OpenStack, then it sends binary data for it, the qcow2 image.
+// pushImage first creates meta for image at OpenStack, then it sends binary data for it, the qcow2 or iso image.
 func pushImage(clientGlance *gophercloud.ServiceClient, imageName string, imageFilepath string, flavor *flavors.Flavor) (*images.Image, error) {
 	// Create metadata (on OpenStack).
-	createdImage, err := createImage(clientGlance, imageName, flavor)
+	createdImage, err := createImage(clientGlance, imageName, imageFilepath, flavor)
 	if err != nil {
 		return nil, errors.New("creating openstack image metadata", err)
 	}
@@ -176,10 +178,16 @@ func pushImage(clientGlance *gophercloud.ServiceClient, imageName string, imageF
 }
 
 // createImage creates image metadata on OpenStack.
-func createImage(clientGlance *gophercloud.ServiceClient, name string, flavor *flavors.Flavor) (*images.Image, error) {
+func createImage(clientGlance *gophercloud.ServiceClient, name string, imgfilepath string, flavor *flavors.Flavor) (*images.Image, error) {
+	var diskformattype string
+	if filepath.Ext(imgfilepath) == ".iso" {
+		diskformattype = "iso"
+	} else {
+		diskformattype = "qcow2"
+	}
 	createdImage, err := images.Create(clientGlance, images.CreateOpts{
 		Name:             name,
-		DiskFormat:       "qcow2",
+		DiskFormat:       diskformattype,
 		ContainerFormat:  "bare",
 		MinDiskGigabytes: flavor.Disk,
 	}).Extract()

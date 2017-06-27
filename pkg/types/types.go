@@ -30,6 +30,7 @@ const (
 	Infrastructure_XEN        Infrastructure = "XEN"
 	Infrastructure_OPENSTACK  Infrastructure = "OPENSTACK"
 	Infrastructure_UKVM       Infrastructure = "UKVM"
+	Infrastructure_UHYVE       Infrastructure = "UHYVE"
 )
 
 type Image struct {

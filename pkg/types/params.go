@@ -10,6 +10,7 @@ type RunInstanceParams struct {
 	InstanceMemory       int
 	NoCleanup            bool
 	DebugMode            bool
+	Ip                   string
 }
 
 type StageImageParams struct {
