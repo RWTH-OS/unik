@@ -74,3 +74,7 @@ func getCmdlinePath(imageName string) string {
 func getVolumePath(volumeName string) string {
 	return filepath.Join(qemuVolumesDirectory(), volumeName, "data.img")
 }
+
+func getHermitLoaderPath(imageName string) string {
+	return filepath.Join(qemuImagesDirectory(), imageName, "ldhermit.elf")
+}

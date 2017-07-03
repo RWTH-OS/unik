@@ -52,6 +52,7 @@ Due to the frequency with which features and patches are applied to UniK, we hav
 * **OSv**: UniK supports compiling Java, Node.js, C and C++ code into [OSv](http://osv.io/) unikernels
 * **IncludeOS**: UniK supports compiling C++ code into [IncludeOS](https://github.com/hioa-cs/IncludeOS) unikernels
 * **MirageOS**: UniK supports compiling [OCaml](docs/compilers/mirage.md), code into [MirageOS](https://mirage.io) unikernels
+* **HermitCore**: UniK supports compiling [Go](docs/compilers/hermitcore.md#golang), [Fortran](docs/compilers/hermitcore.md#fortran), [C](docs/compilers/hermitcore.md#cc) and [C++](docs/compilers/hermitcore.md#cc) code into [HermitCore](http://hermitcore.org) unikernels
 
 *We are looking for community help to add support for more unikernel types and languages.*
 
@@ -65,6 +66,7 @@ Due to the frequency with which features and patches are applied to UniK, we hav
 * [Xen](docs/providers/xen.md)
 * [OpenStack](docs/providers/openstack.md)
 * [Photon Controller](docs/providers/photon.md)
+* [uHyve](docs/providers/uhyve.md)
 
 ### Roadmap:
 * dynamic volume and application arguments configuration at instance runtime (rather than at compile time)

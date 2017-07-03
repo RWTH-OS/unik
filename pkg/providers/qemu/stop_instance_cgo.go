@@ -5,10 +5,12 @@ package qemu
 import (
 	"syscall"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/emc-advanced-dev/pkg/errors"
-	"github.com/cf-unik/unik/pkg/types"
 	"strconv"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/cf-unik/unik/pkg/compilers"
+	"github.com/cf-unik/unik/pkg/types"
+	"github.com/emc-advanced-dev/pkg/errors"
 )
 
 func (p *QemuProvider) StopInstance(id string) error {
@@ -23,9 +25,17 @@ func (p *QemuProvider) StopInstance(id string) error {
 		return errors.New("invalid instance id (should be qemu pid)", err)
 	}
 
-	if err := syscall.Kill(pid, syscall.SIGKILL); err != nil {
+	image, err := p.GetImage(instance.ImageId)
+
+	if compilers.CompilerType(image.RunSpec.Compiler).Base() == "hermitcore" { // kill proxy with SIGTERM so that the proxy quits qemu
+		err = syscall.Kill(pid, syscall.SIGTERM)
+	} else {
+		err = syscall.Kill(pid, syscall.SIGKILL)
+	}
+	if err != nil {
 		logrus.Warn("failed terminating instance, assuming instance has externally terminated", err)
 	}
+
 	volumesToDetach := []*types.Volume{}
 	volumes, err := p.ListVolumes()
 	if err != nil {

@@ -1,0 +1,33 @@
+FROM ubuntu:16.04
+
+RUN apt-get update
+RUN apt-get install -y apt-transport-https
+RUN echo "deb https://dl.bintray.com/rwth-os/hermitcore vivid main" | tee -a /etc/apt/sources.list
+RUN apt-get -qq update
+RUN apt-get install -y build-essential
+RUN apt-get install --yes --force-yes binutils-hermit newlib-hermit pthread-embedded-hermit gcc-hermit
+
+RUN apt-get install -y xorriso
+RUN apt-get update
+RUN apt-get install -y grub-common
+RUN apt-get install -y grub-pc-bin
+
+RUN apt-get update
+RUN apt-get upgrade -y --allow-unauthenticated libhermit
+
+VOLUME /opt/code
+WORKDIR /opt/code
+
+env PATH /opt/hermit/bin:$PATH
+CMD cp /opt/hermit/bin/ldhermit.elf /opt/code/ldhermit.elf && \
+  make && \
+  mkdir -p ./iso/boot/grub && \
+  filename=$(find ./ -name \*.img) && \
+  rawfilename=$(echo $filename | cut -d "/" -f 2 | cut -f1 -d".") && \
+  cp ./ldhermit.elf ./iso/boot && \
+  cp ./$filename ./iso/boot && \
+  printf \
+"default=0\ntimeout=0\n\nmenuentry \"$rawfilename.img\" {\n\tmultiboot /boot/ldhermit.elf -uart=io:0x3f8\n\tmodule \
+/boot/$rawfilename.img\n\tboot\n}" \
+> ./iso/boot/grub/grub.cfg && \
+  grub-mkrescue -o $rawfilename.iso iso
